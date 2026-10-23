@@ -1219,6 +1219,20 @@ dialog.room-dlg::backdrop{background:rgba(8,12,10,.62);backdrop-filter:blur(4px)
       window.homereserve.initWidgetSearch({ token: 'OR0TgmTF31', navigation: false, instance_id: 'search' });
     } else if (tries < 100) setTimeout(function () { initHR(tries + 1); }, 100);
   })(0);
+  // Поле телефона в форме брони Realty Calendar при фокусе подставляет «+7», но оставляет курсор перед семёркой:
+  // номер «9…» превращается в турецкий «+90…» и бронь не проходит. Первую цифру ставим после «+7», ведущую «8» отбрасываем.
+  document.addEventListener('beforeinput', function (e) {
+    var el = e.target;
+    if (!el.matches || !el.matches('#hr-modal input[type="tel"]') || e.inputType.indexOf('insert') !== 0) return;
+    var data = (e.data || '').replace(/\D/g, ''), digits = (el.value || '').replace(/\D/g, '');
+    if (!data || (digits && digits !== '7')) return;
+    if (data[0] === '8' || (data[0] === '7' && data.length > 1)) data = data.slice(1);
+    e.preventDefault();
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(el, '+7' + data);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    var n = el.value.length;
+    try { el.setSelectionRange(n, n); } catch (_) {}
+  }, true);
   // Яндекс Метрика: включается, когда в build.py вписан YM_ID.
   window.YM_ID = '';
   if (window.YM_ID) {
